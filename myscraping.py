@@ -21,7 +21,6 @@ abs_path = os.getcwd()
 ScrapingTime = 3
 waittime = 0.5
 driver_path = "driver\chromedriver86.exe"
-# driver_path = chromedriver_binary.chromedriver_filename
 print(driver_path)
 
 options = webdriver.chrome.options.Options()
@@ -37,7 +36,7 @@ options.add_argument('--no-sandbox')
 options.binary_location = "C:\Program Files\Google\Chrome\Application\chrome.exe"
 
 #特定のWEBページからURLリストを取得する
-def getScrapingImageURLs(url, Selector, num=100):
+def getScrapingImageURLs(url, Selector, num=100, classname=None, idname=None):
     time.sleep(ScrapingTime)
     driver = webdriver.Chrome(executable_path=driver_path, chrome_options=options)
     #driver = webdriver.Chrome(chrome_options=options)
@@ -48,8 +47,12 @@ def getScrapingImageURLs(url, Selector, num=100):
     leng = 0
     for i in range(num):
         print(i)
-        driver.execute_script(
-            "window.scrollTo(0, document.getElementsByClassName('justified-gallery')[0].scrollHeight)")
+        if classname != None:
+            driver.execute_script(
+                "window.scrollTo(0, document.getElementsByClassName('%s')[0].scrollHeight)" % classname)
+        elif idname != None:
+            driver.execute_script(
+                "window.scrollTo(0, document.getElementById('%s')[0].scrollHeight)" % idname)
         soup = BeautifulSoup(driver.page_source, features="html.parser")
         time.sleep(waittime*i)
         imgs = soup.find_all('img')
@@ -66,7 +69,7 @@ def getScrapingImageURLs(url, Selector, num=100):
     return image_urls
 
 #画像のURLリストから指定ディレクトリに保存する
-def saveImageFromURLs(image_urls, save_dir, save_type="local"):
+def saveImageFromURLs(image_urls, save_dir):
     save_urls = []
     for index, image_url in enumerate(image_urls):
         filename = getULIDStr() + ".jpg"
@@ -101,15 +104,15 @@ def getULIDStr():
 
 if __name__ == "__main__":
     save_dir = "images"
-    keyword = "海"
+    keyword = "空"
     save_dir = "images/"+keyword
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
     url = 'https://500px.com/search?submit=送信q=%s&type=photos' % keyword
-    Selector = ".photo_link"
-
-    image_urls = getScrapingImageURLs(url, Selector, 200)
-
-    print(image_urls)
+    Selector = ".photo_link"#classの場合はドット【.】をつけて、idの場合は【#】をつける
+    classname = "justified-gallery"#スクロールするクラス名
+    idname = None#スクロールするID名：クラス名を指定している場合はNoneにする
+    scroll_num = 200  # スクロールするID名：クラス名を指定している場合はNoneにする
+    image_urls = getScrapingImageURLs(url=url, Selector=Selector, num=scroll_num, classname=classname, idname=idname)
     save_urls = saveImageFromURLs(image_urls, save_dir)
     print("save complete")
