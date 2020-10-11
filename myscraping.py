@@ -41,6 +41,7 @@ def getScrapingImageURLs(url, Selector, num=100, classname=None, idname=None):
     driver = webdriver.Chrome(executable_path=driver_path, chrome_options=options)
     #driver = webdriver.Chrome(chrome_options=options)
     driver.get(url)
+
     WebDriverWait(driver, 30).until(
         EC.presence_of_element_located((By.CSS_SELECTOR, Selector))
     )
@@ -48,11 +49,13 @@ def getScrapingImageURLs(url, Selector, num=100, classname=None, idname=None):
     for i in range(num):
         print(i)
         if classname != None:
+            script = "window.scrollTo(0, document.getElementsByClassName('%s')[0].scrollHeight)" % classname
             driver.execute_script(
-                "window.scrollTo(0, document.getElementsByClassName('%s')[0].scrollHeight)" % classname)
+                script)
         elif idname != None:
+            script = "window.scrollTo(0, document.getElementById('%s').scrollHeight)" % idname
             driver.execute_script(
-                "window.scrollTo(0, document.getElementById('%s')[0].scrollHeight)" % idname)
+                script)
         soup = BeautifulSoup(driver.page_source, features="html.parser")
         time.sleep(waittime*i)
         imgs = soup.find_all('img')
@@ -104,15 +107,19 @@ def getULIDStr():
 
 if __name__ == "__main__":
     save_dir = "images"
-    keyword = "空"
+    keyword = "sky"
     save_dir = "images/"+keyword
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
-    url = 'https://500px.com/search?submit=送信q=%s&type=photos' % keyword
-    Selector = ".photo_link"#classの場合はドット【.】をつけて、idの場合は【#】をつける
-    classname = "justified-gallery"#スクロールするクラス名
-    idname = None#スクロールするID名：クラス名を指定している場合はNoneにする
-    scroll_num = 200  # スクロールするID名：クラス名を指定している場合はNoneにする
+    #--------------
+    master_url = 'https://500px.com/search?submit=送信q=%s&type=photos'
+    Selector = ".photo_link"  # classの場合はドット【.】をつけて、idの場合は【#】をつける
+    classname = "justified-gallery"  # スクロールするクラス名
+    idname = None  # スクロールするID名：クラス名を指定している場合はNoneにする
+    url = master_url % keyword
+    print(url)
+    # --------------
+    scroll_num = 100  # スクロールするID名：クラス名を指定している場合はNoneにする
     image_urls = getScrapingImageURLs(url=url, Selector=Selector, num=scroll_num, classname=classname, idname=idname)
     save_urls = saveImageFromURLs(image_urls, save_dir)
     print("save complete")
